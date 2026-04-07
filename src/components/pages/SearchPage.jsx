@@ -6,6 +6,11 @@ import {
   Sunset,
   Moon,
   Bus,
+  Snowflake,
+  Armchair,
+  ShieldCheck,
+  Star,
+  MapPin,
 } from "lucide-react";
 import Booking from "../booking/Booking";
 
@@ -25,53 +30,59 @@ function SearchPage() {
     setOpenSection(openSection === section ? "" : section);
   };
 
+  // 🔥 Time options with labels + icons
   const timeOptions = [
-    { label: "06:00 - 12:00", sub: "Morning", icon: <Sun size={16} /> },
-    { label: "12:00 - 18:00", sub: "Afternoon", icon: <Sunset size={16} /> },
-    { label: "18:00 - 24:00", sub: "Evening", icon: <Sunset size={16} /> },
-    { label: "00:00 - 06:00", sub: "Night", icon: <Moon size={16} /> },
+    { label: "06:00 - 12:00", sub: "Morning", icon: <Sun size={18} /> },
+    { label: "12:00 - 18:00", sub: "Afternoon", icon: <Sunset size={18} /> },
+    { label: "18:00 - 24:00", sub: "Evening", icon: <Sunset size={18} /> },
+    { label: "00:00 - 06:00", sub: "Night", icon: <Moon size={18} /> },
   ];
 
   const busTypes = ["AC", "Non AC", "Seater", "Sleeper", "Volvo"];
 
+  // 🔥 Default filter chips with icons
+  const chipFilters = [
+    { label: "Free Cancellation", icon: <ShieldCheck size={16} /> },
+    { label: "AC", icon: <Snowflake size={16} /> },
+    { label: "Sleeper", icon: <Bus size={16} /> },
+    { label: "Seater", icon: <Armchair size={16} /> },
+    { label: "High Rated", icon: <Star size={16} /> },
+    { label: "Live Tracking", icon: <MapPin size={16} /> },
+  ];
+
   const FilterContent = () => (
     <div className="space-y-6">
 
-      {/* Chips */}
+      {/* 🔥 FILTER CHIPS */}
       <div className="flex flex-wrap gap-3">
-        {[
-          "Primo Bus",
-          "Free Cancellation",
-          "AC",
-          "Sleeper",
-          "Seater",
-          "Single Seats",
-          "Non AC",
-          "High Rated",
-          "Live Tracking",
-          "Volvo",
-        ].map((item, i) => (
+        {chipFilters.map((item, i) => (
           <button
             key={i}
-            className="px-4 py-2 rounded-full border text-sm bg-gray-50 hover:bg-red-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border text-sm bg-gray-50 hover:bg-red-50 transition"
           >
-            {item}
+            {item.icon}
+            {item.label}
           </button>
         ))}
       </div>
 
-      {/* Sections */}
+      {/* 🔽 SECTIONS */}
       {["departure", "arrival", "bus"].map((section) => (
         <div key={section}>
+          
+          {/* Title */}
           <div
             onClick={() => toggleSection(section)}
-            className="flex justify-between cursor-pointer"
+            className="flex justify-between items-center cursor-pointer"
           >
-            <h3 className="font-medium capitalize">
+            <h3 className="font-semibold text-gray-800">
               {section === "bus"
                 ? "Bus Type"
-                : `${section} time`}
+                : section === "departure"
+                ? "Departure time from source"
+                : "Arrival time at destination"}
             </h3>
+
             <ChevronDown
               className={`transition ${
                 openSection === section ? "rotate-180" : ""
@@ -79,24 +90,47 @@ function SearchPage() {
             />
           </div>
 
+          {/* Content */}
           {openSection === section && (
-            <div className="mt-3 space-y-3">
-              {(section === "bus" ? busTypes : timeOptions).map(
-                (item, i) => (
-                  <label
-                    key={i}
-                    className="flex justify-between p-2 hover:bg-gray-50 rounded"
-                  >
-                    <div className="flex gap-2 items-center">
-                      {section !== "bus" ? item.icon : <Bus size={16} />}
-                      <span className="text-sm">
+            <div className="mt-4 space-y-3">
+
+              {(section === "bus" ? busTypes : timeOptions).map((item, i) => (
+                <label
+                  key={i}
+                  className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer border-b"
+                >
+                  
+                  <div className="flex items-center gap-3">
+                    
+                    {/* Icon */}
+                    {section !== "bus" ? (
+                      item.icon
+                    ) : (
+                      <Bus size={16} />
+                    )}
+
+                    {/* Text */}
+                    <div>
+                      <p className="text-sm font-medium">
                         {section === "bus" ? item : item.label}
-                      </span>
+                      </p>
+
+                      {/* Sub text */}
+                      {section !== "bus" && (
+                        <p className="text-xs text-gray-500">
+                          {item.sub}
+                        </p>
+                      )}
                     </div>
-                    <input type="checkbox" className="accent-red-500" />
-                  </label>
-                )
-              )}
+                  </div>
+
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    className="accent-red-500 w-4 h-4"
+                  />
+                </label>
+              ))}
             </div>
           )}
         </div>
@@ -107,7 +141,7 @@ function SearchPage() {
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
 
-      {/* Top */}
+      {/* 🔍 Top */}
       <div className="sticky top-0 z-40 bg-white shadow-md">
         <Booking {...data} onSearch={handleSearch} isSearchPage />
       </div>
@@ -118,24 +152,24 @@ function SearchPage() {
 
           <button
             onClick={() => setShowFilter(true)}
-            className="border px-3 py-1.5 rounded-full text-sm bg-white shadow"
+            className="flex items-center gap-1 border px-3 py-1.5 rounded-full text-sm bg-white shadow"
           >
             ⚙️ Filter & Sort
           </button>
 
-          {["Free Cancellation", "AC", "Sleeper", "Seater"].map(
-            (item, i) => (
-              <button
-                key={i}
-                className="border px-3 py-1.5 rounded-full text-sm bg-gray-50 whitespace-nowrap"
-              >
-                {item}
-              </button>
-            )
-          )}
+          {chipFilters.map((item, i) => (
+            <button
+              key={i}
+              className="flex items-center gap-1 border px-3 py-1.5 rounded-full text-sm bg-gray-50 whitespace-nowrap"
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* 📦 Layout */}
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
 
         {/* Desktop Filter */}
@@ -156,14 +190,18 @@ function SearchPage() {
               <div>
                 <h2 className="font-semibold text-lg">AsiaBus Travels</h2>
                 <p className="text-sm text-gray-500">AC Sleeper</p>
+
                 <div className="flex gap-4 mt-2 text-sm">
                   <span>20:00</span> → <span>07:00</span>
                 </div>
+
+                <p className="text-xs text-gray-400">11h duration</p>
               </div>
 
               <div className="text-right">
                 <p className="text-green-600">4.3 ⭐</p>
                 <p className="font-bold text-xl">₹{700 + i * 50}</p>
+
                 <button className="mt-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg">
                   View seats
                 </button>
