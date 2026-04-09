@@ -13,8 +13,9 @@ import {
   MapPin,
 } from "lucide-react";
 import Booking from "../booking/Booking";
-
+import SeatModal from "../booking/SeatModal";
 function SearchPage() {
+  const [showSeatModal, setShowSeatModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const data = location.state || {};
@@ -202,9 +203,12 @@ function SearchPage() {
                 <p className="text-green-600">4.3 ⭐</p>
                 <p className="font-bold text-xl">₹{700 + i * 50}</p>
 
-                <button className="mt-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg">
-                  View seats
-                </button>
+                <button
+  onClick={() => setShowSeatModal(true)}   // ✅ HERE
+  className="mt-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg"
+>
+  View seats
+</button>
               </div>
             </div>
           ))}
@@ -235,6 +239,10 @@ function SearchPage() {
           </div>
         </div>
       )}
+      {showSeatModal && (
+      <SeatModal onClose={() => setShowSeatModal(false)} />
+    )}
+
     </div>
   );
 }

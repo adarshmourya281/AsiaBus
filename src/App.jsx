@@ -7,7 +7,7 @@ import TrackBooking from "./components/pages/TrackBooking";
 import CancelBooking from "./components/pages/CancelBooking";
 import PrintTicket from "./components/pages/PrintTicket";
 
-import "./App.css";
+
 
 function App() {
   return (
