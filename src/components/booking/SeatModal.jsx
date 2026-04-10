@@ -1,35 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SeatSelection from "./SeatSelection";
 import Boarding from "./Boarding";
 import Passenger from "./Passenger";
-
+import { useNavigate } from "react-router-dom";
 function SeatModal({ onClose }) {
+
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedSeats, setSelectedSeats] = useState([]);
-
-  // ✅ NEW STATES (IMPORTANT)
+  const [passengers, setPassengers] = useState([]);
+  // ✅ NEW STATES
   const [boardingPoint, setBoardingPoint] = useState(null);
   const [droppingPoint, setDroppingPoint] = useState(null);
+  const [isPassengerValid, setIsPassengerValid] = useState(false);
 
   // ✅ STEP CONTROL
   const handleStepChange = (targetStep) => {
-    // ❌ Block step 2 & 3 if no seats
     if (targetStep > 1 && selectedSeats.length === 0) {
       alert("Please select seat first");
       return;
     }
 
-    // ❌ Block step 3 if boarding/drop not selected
-    if (
-      targetStep > 2 &&
-      (!boardingPoint || !droppingPoint)
-    ) {
+    if (targetStep > 2 && (!boardingPoint || !droppingPoint)) {
       alert("Please select boarding & dropping point");
       return;
     }
 
     setStep(targetStep);
   };
+
+  // ✅ RESET VALIDATION WHEN STEP CHANGES
+  useEffect(() => {
+    if (step !== 3) setIsPassengerValid(false);
+  }, [step]);
 
   // ✅ TOTAL PRICE
   const totalPrice = selectedSeats.reduce(
@@ -51,32 +54,29 @@ function SeatModal({ onClose }) {
           <button onClick={onClose}>✕</button>
         </div>
 
-        {/* 🔥 STEPS */}
+        {/* STEPS */}
         <div className="flex justify-between mb-6 text-sm">
 
           <span
             onClick={() => handleStepChange(1)}
-            className={`cursor-pointer ${
-              step === 1 ? "text-red-500 font-semibold" : "text-gray-500"
-            }`}
+            className={`cursor-pointer ${step === 1 ? "text-red-500 font-semibold" : "text-gray-500"
+              }`}
           >
             1. Seats
           </span>
 
           <span
             onClick={() => handleStepChange(2)}
-            className={`cursor-pointer ${
-              step === 2 ? "text-red-500 font-semibold" : "text-gray-500"
-            }`}
+            className={`cursor-pointer ${step === 2 ? "text-red-500 font-semibold" : "text-gray-500"
+              }`}
           >
             2. Board/Drop Point
           </span>
 
           <span
             onClick={() => handleStepChange(3)}
-            className={`cursor-pointer ${
-              step === 3 ? "text-red-500 font-semibold" : "text-gray-500"
-            }`}
+            className={`cursor-pointer ${step === 3 ? "text-red-500 font-semibold" : "text-gray-500"
+              }`}
           >
             3. Passenger
           </span>
@@ -99,9 +99,15 @@ function SeatModal({ onClose }) {
           />
         )}
 
-        {step === 3 && <Passenger />}
+        {step === 3 && (
+          <Passenger
+            selectedSeats={selectedSeats}
+            onValidationChange={setIsPassengerValid}
+            setPassengers={setPassengers}
+          />
+        )}
 
-        {/* 🔥 BOTTOM BAR */}
+        {/* BOTTOM BAR */}
         {selectedSeats.length > 0 && (
           <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-md border-t flex justify-between items-center">
 
@@ -130,13 +136,10 @@ function SeatModal({ onClose }) {
               <button
                 onClick={() => handleStepChange(3)}
                 disabled={!boardingPoint || !droppingPoint}
-                className={`px-6 py-2 rounded-full text-white
-                  ${
-                    boardingPoint && droppingPoint
-                      ? "bg-red-500"
-                      : "bg-gray-300 cursor-not-allowed"
-                  }
-                `}
+                className={`px-6 py-2 rounded-full text-white ${boardingPoint && droppingPoint
+                  ? "bg-red-500"
+                  : "bg-gray-300 cursor-not-allowed"
+                  }`}
               >
                 Fill passenger details
               </button>
@@ -144,7 +147,25 @@ function SeatModal({ onClose }) {
 
             {/* STEP 3 */}
             {step === 3 && (
-              <button className="bg-green-600 text-white px-6 py-2 rounded-full">
+              <button
+                disabled={!isPassengerValid}
+                onClick={() => {
+                  // Store booking data in localStorage
+                  localStorage.setItem('bookingData', JSON.stringify({
+                    selectedSeats,
+                    boardingPoint,
+                    droppingPoint,
+                    totalPrice,
+                    passengers,
+                  }));
+                  navigate("/payment");
+                  onClose();
+                }}
+                className={`px-6 py-2 rounded-full text-white ${isPassengerValid
+                  ? "bg-green-600"
+                  : "bg-gray-300 cursor-not-allowed"
+                  }`}
+              >
                 Proceed to Payment
               </button>
             )}

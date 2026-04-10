@@ -70,7 +70,7 @@ function SearchPage() {
       {/* 🔽 SECTIONS */}
       {["departure", "arrival", "bus"].map((section) => (
         <div key={section}>
-          
+
           {/* Title */}
           <div
             onClick={() => toggleSection(section)}
@@ -80,14 +80,13 @@ function SearchPage() {
               {section === "bus"
                 ? "Bus Type"
                 : section === "departure"
-                ? "Departure time from source"
-                : "Arrival time at destination"}
+                  ? "Departure time from source"
+                  : "Arrival time at destination"}
             </h3>
 
             <ChevronDown
-              className={`transition ${
-                openSection === section ? "rotate-180" : ""
-              }`}
+              className={`transition ${openSection === section ? "rotate-180" : ""
+                }`}
             />
           </div>
 
@@ -100,9 +99,9 @@ function SearchPage() {
                   key={i}
                   className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer border-b"
                 >
-                  
+
                   <div className="flex items-center gap-3">
-                    
+
                     {/* Icon */}
                     {section !== "bus" ? (
                       item.icon
@@ -204,11 +203,11 @@ function SearchPage() {
                 <p className="font-bold text-xl">₹{700 + i * 50}</p>
 
                 <button
-  onClick={() => setShowSeatModal(true)}   // ✅ HERE
-  className="mt-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg"
->
-  View seats
-</button>
+                  onClick={() => setShowSeatModal(true)}   // ✅ HERE
+                  className="mt-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg"
+                >
+                  View seats
+                </button>
               </div>
             </div>
           ))}
@@ -240,8 +239,8 @@ function SearchPage() {
         </div>
       )}
       {showSeatModal && (
-      <SeatModal onClose={() => setShowSeatModal(false)} />
-    )}
+        <SeatModal onClose={() => setShowSeatModal(false)} />
+      )}
 
     </div>
   );

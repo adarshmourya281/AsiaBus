@@ -6,7 +6,7 @@ import SearchPage from "./components/pages/SearchPage";
 import TrackBooking from "./components/pages/TrackBooking";
 import CancelBooking from "./components/pages/CancelBooking";
 import PrintTicket from "./components/pages/PrintTicket";
-
+import PaymentPage from "./components/pages/PaymentPage";
 
 
 function App() {
@@ -15,9 +15,10 @@ function App() {
       <Routes>
 
         <Route path="/" element={<Layout />}>
-
+        
           <Route index element={<Home />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="payment" element={<PaymentPage />} />
           <Route path="track-booking" element={<TrackBooking />} />
           <Route path="cancel-booking" element={<CancelBooking />} />
           <Route path="print-ticket" element={<PrintTicket />} />
