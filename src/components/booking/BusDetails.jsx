@@ -1,228 +1,162 @@
-import { useState, useEffect } from "react";
+import { Star, Users, Wifi, AlertCircle, MapPin, Clock } from "lucide-react";
+import { formatMinutesToTime } from "../../utils/timeUtils";
 
-import bus1 from "../../assets/bus1.jpeg";
-import bus2 from "../../assets/bus2.jpeg";
-import bus3 from "../../assets/bus3.jpeg";
-import bus4 from "../../assets/bus4.jpeg";
-import bus5 from "../../assets/bus5.jpeg";
+function BusDetails({ trip, selectedSeats = [] }) {
+  if (!trip) {
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200 text-center">
+        <p className="text-gray-500">No bus details available</p>
+      </div>
+    );
+  }
 
-function BusDetails() {
-  const [activeTab, setActiveTab] = useState("policy");
-  const [previewIndex, setPreviewIndex] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const images = [bus1, bus2, bus3, bus4, bus5];
-
-  const visible = 3;
-  const total = images.length;
-
-  // 🔥 AUTO SLIDE
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) =>
-        prev < total - visible ? prev + 1 : 0
-      );
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // NEXT
-  const next = () => {
-    if (currentIndex < total - visible) {
-      setCurrentIndex(currentIndex + 1);
-    }
+  // ✅ Get the fare for currently selected seats
+  const getSelectedFare = () => {
+    if (selectedSeats.length === 0) return 0;
+    return selectedSeats.reduce((sum, seat) => sum + (seat.fare || 0), 0);
   };
 
-  // PREV
-  const prev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
+  const selectedFare = getSelectedFare();
+  const seatsPerSeat = selectedSeats[0]?.fare || 0;
+
+  // ✅ Get cancellation policy
+  const cancellationPolicy = trip.cancellationPolicy || "Non-refundable";
+
+  // ✅ Format departure & arrival times
+  const departureTime = formatMinutesToTime(trip.departureTime);
+  const arrivalTime = formatMinutesToTime(trip.arrivalTime);
 
   return (
-    <div className="bg-gray-50 p-5 rounded-xl shadow-sm">
-
+    <div className="bg-white rounded-lg md:rounded-xl shadow-md md:shadow-lg overflow-hidden sticky lg:top-4 lg:h-fit lg:max-w-sm w-full max-w-full">
       {/* HEADER */}
-      <h2 className="font-semibold text-lg">Intercity Travels</h2>
-      <p className="text-sm text-gray-500">
-        18:30 - 12:25 • Thu 16 Apr
-      </p>
-
-      {/* 🔥 CAROUSEL (3 ITEMS ONLY) */}
-      <div className="relative mt-4">
-
-        {/* LEFT */}
-        <button
-          onClick={prev}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow p-2 rounded-full z-10"
-        >
-          ◀
-        </button>
-
-        {/* VIEWPORT */}
-        <div className="overflow-hidden">
-
-          <div
-            className="flex transition-transform duration-500"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / visible)}%)`,
-              width: `${(total * 100) / visible}%`,
-            }}
-          >
-            {images.map((img, i) => (
-              <div
-                key={i}
-                style={{ width: `${100 / total}%` }}
-                className="px-2"
-              >
-                <img
-                  src={img}
-                  onClick={() => setPreviewIndex(i)}
-                  className="w-full h-44 object-cover rounded-lg cursor-pointer hover:scale-105 transition"
-                />
-              </div>
-            ))}
-          </div>
-
-        </div>
-
-        {/* RIGHT */}
-        <button
-          onClick={next}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow p-2 rounded-full z-10"
-        >
-          ▶
-        </button>
-
-      </div>
-
-      {/* 🔥 TABS */}
-      <div className="flex gap-4 mt-6 text-sm border-b pb-2 overflow-x-auto">
-        {["policy", "boarding", "dropping", "photos"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-1 whitespace-nowrap capitalize ${
-              activeTab === tab
-                ? "text-red-500 border-b-2 border-red-500"
-                : "text-gray-500"
-            }`}
-          >
-            {tab === "policy"
-              ? "Cancellation policy"
-              : tab === "photos"
-              ? "Bus Photos"
-              : tab}
-          </button>
-        ))}
+      <div className="bg-gradient-to-r from-red-50 to-red-100 p-2 sm:p-3 md:p-4 border-b border-red-200">
+        <h3 className="font-bold text-sm sm:text-base md:text-lg text-gray-900 truncate">{trip.travels || "Bus"}</h3>
+        <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">{trip.busType || "AC Sleeper"}</p>
       </div>
 
       {/* CONTENT */}
-      <div className="mt-4 text-sm max-h-[220px] overflow-y-auto">
-
-        {activeTab === "policy" && (
-          <div className="space-y-3">
-            <div className="p-3 border rounded-lg flex justify-between">
-              <span>Before 24 hrs</span>
-              <span className="text-green-600 font-semibold">90% refund</span>
+      <div className="p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 md:space-y-4">
+        {/* TIME & DURATION */}
+        <div className="space-y-1 sm:space-y-2 pb-2 sm:pb-3 md:pb-4 border-b">
+          <div className="flex items-center justify-between gap-1 sm:gap-2">
+            <div className="text-center flex-1">
+              <p className="text-xs text-gray-600 font-semibold">DEPART</p>
+              <p className="text-sm sm:text-base md:text-lg font-bold text-gray-900">{departureTime}</p>
             </div>
-            <div className="p-3 border rounded-lg flex justify-between">
-              <span>12–24 hrs</span>
-              <span className="text-yellow-600 font-semibold">50% refund</span>
+            <div className="text-center flex-1">
+              <Clock size={12} className="text-gray-400 mx-auto mb-0.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+              <p className="text-xs text-gray-600 font-semibold">{trip.duration || "N/A"}</p>
             </div>
-            <div className="p-3 border rounded-lg flex justify-between">
-              <span>Less than 12 hrs</span>
-              <span className="text-red-500 font-semibold">No refund</span>
+            <div className="text-center flex-1">
+              <p className="text-xs text-gray-600 font-semibold">ARRIVE</p>
+              <p className="text-sm sm:text-base md:text-lg font-bold text-gray-900">{arrivalTime}</p>
             </div>
           </div>
-        )}
+        </div>
 
-        {activeTab === "boarding" && (
-          <div className="space-y-3">
-            {[
-              { time: "18:00", name: "Nigdi" },
-              { time: "18:15", name: "Ravet" },
-              { time: "18:30", name: "Wakad" },
-            ].map((item, i) => (
-              <div key={i} className="p-3 border rounded-lg flex justify-between">
-                <span>{item.name}</span>
-                <span className="text-gray-500">{item.time}</span>
+        {/* SEATS AVAILABLE */}
+        <div className="flex items-center gap-2 p-1.5 sm:p-2 md:p-3 bg-green-50 border border-green-200 rounded text-xs sm:text-sm">
+          <Users size={12} className="text-green-600 sm:w-3 sm:h-3 md:w-4 md:h-4 flex-shrink-0" />
+          <span className="font-semibold text-green-800">
+            {trip.availableSeats || 0} seats available
+          </span>
+        </div>
+
+        {/* AMENITIES */}
+        <div className="space-y-1 pb-2 sm:pb-3 md:pb-4 border-b text-xs sm:text-sm">
+          <div className="flex items-center gap-2 text-gray-700">
+            <Wifi size={12} className="text-blue-600 flex-shrink-0 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+            <span>WiFi Available</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-700">
+            <Users size={12} className="text-blue-600 flex-shrink-0 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+            <span>Full AC</span>
+          </div>
+          {trip.rating && (
+            <div className="flex items-center gap-2 text-gray-700">
+              <Star size={12} className="text-yellow-500 flex-shrink-0 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" />
+              <span>Rating: {trip.rating}/5</span>
+            </div>
+          )}
+        </div>
+
+        {/* PRICING */}
+        {selectedSeats.length > 0 && (
+          <div className="space-y-1 sm:space-y-2 pb-2 sm:pb-3 md:pb-4 border-b bg-green-50 p-1.5 sm:p-2 md:p-3 rounded-lg text-xs sm:text-sm">
+            {/* Selected Seat Numbers */}
+            <div className="space-y-0.5 sm:space-y-1">
+              <p className="text-xs text-gray-600 font-semibold">Selected Seats</p>
+              <div className="flex flex-wrap gap-1">
+                {selectedSeats.map((seat) => (
+                  <span
+                    key={seat.id}
+                    className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-green-200 text-green-800 rounded text-xs font-semibold"
+                  >
+                    {seat.name}
+                  </span>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
 
-        {activeTab === "dropping" && (
-          <div className="space-y-3">
-            {[
-              { time: "04:10", name: "Zaheerabad" },
-              { time: "05:00", name: "Hyderabad" },
-            ].map((item, i) => (
-              <div key={i} className="p-3 border rounded-lg flex justify-between">
-                <span>{item.name}</span>
-                <span className="text-gray-500">{item.time}</span>
+            {/* Fare Breakdown */}
+            <div className="space-y-0.5 sm:space-y-1 pt-1 sm:pt-2 border-t border-green-200">
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-gray-600 font-semibold">Per Seat</p>
+                <p className="text-xs sm:text-sm font-bold text-green-600">₹{seatsPerSeat.toFixed(2)}</p>
               </div>
-            ))}
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-gray-600 font-semibold">
+                  Seats ({selectedSeats.length})
+                </p>
+                <p className="text-xs sm:text-sm font-semibold text-green-600">
+                  ₹{(seatsPerSeat * selectedSeats.length).toFixed(2)}
+                </p>
+              </div>
+              <div className="flex justify-between items-center pt-0.5 sm:pt-1 border-t border-green-200">
+                <p className="text-xs text-gray-600 font-semibold">Total</p>
+                <p className="text-base sm:text-lg md:text-xl font-bold text-green-700">₹{selectedFare.toFixed(2)}</p>
+              </div>
+            </div>
           </div>
         )}
 
-        {activeTab === "photos" && (
-          <div className="grid grid-cols-2 gap-3">
-            {images.map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                onClick={() => setPreviewIndex(i)}
-                className="w-full h-28 object-cover rounded-lg cursor-pointer"
-              />
-            ))}
+        {/* CANCELLATION POLICY */}
+        <div className="space-y-1 sm:space-y-2 pb-2 sm:pb-3 md:pb-4 border-b text-xs sm:text-sm">
+          <div className="flex items-start gap-2">
+            <AlertCircle size={12} className="text-amber-600 flex-shrink-0 mt-0.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+            <div>
+              <p className="font-semibold text-gray-900 text-xs sm:text-sm">Cancellation Policy</p>
+              <p className="text-gray-600 text-xs mt-0.5">{cancellationPolicy}</p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* INFO */}
+        <div className="text-xs text-gray-600 space-y-0.5 sm:space-y-1">
+          {trip.id && (
+            <p>
+              <span className="font-semibold text-gray-900">Trip ID:</span> <span className="truncate text-xs">{trip.id}</span>
+            </p>
+          )}
+          {trip.travels && (
+            <p>
+              <span className="font-semibold text-gray-900">Operator:</span> {trip.travels}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* 🔥 FULLSCREEN PREVIEW */}
-      {previewIndex !== null && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-
-          <button
-            onClick={() => setPreviewIndex(null)}
-            className="absolute top-5 right-5 text-white text-2xl"
-          >
-            ✕
-          </button>
-
-          <button
-            onClick={() =>
-              setPreviewIndex(prev =>
-                prev === 0 ? images.length - 1 : prev - 1
-              )
-            }
-            className="absolute left-5 text-white text-3xl"
-          >
-            ◀
-          </button>
-
-          <img
-            src={images[previewIndex]}
-            className="max-h-[80vh] max-w-[90vw] rounded-lg"
-          />
-
-          <button
-            onClick={() =>
-              setPreviewIndex(prev =>
-                prev === images.length - 1 ? 0 : prev + 1
-              )
-            }
-            className="absolute right-5 text-white text-3xl"
-          >
-            ▶
-          </button>
+      {/* FOOTER STATUS */}
+      {selectedSeats.length > 0 && (
+        <div className="bg-gradient-to-r from-green-50 to-green-100 p-1.5 sm:p-2 md:p-3 border-t border-green-200">
+          <p className="text-xs sm:text-sm text-green-700 font-semibold text-center">
+            ✓ {selectedSeats.length} seat{selectedSeats.length !== 1 ? "s" : ""} selected
+          </p>
         </div>
       )}
     </div>
   );
 }
+
 
 export default BusDetails;

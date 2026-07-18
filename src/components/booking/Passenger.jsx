@@ -1,225 +1,315 @@
 
 import { useState, useEffect } from "react";
-function BookingPage({ onValidationChange, setPassengers  }) {
+import { getProfile } from "../../services/authService";
+import { User, Phone, Mail } from "lucide-react";
+
+function Passenger({ trip, selectedSeats, onValidationChange, setPassengers }) {
+  // PROFILE STATE
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   // CONTACT STATE
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [state, setState] = useState("");
-  const [whatsapp, setWhatsapp] = useState(true);
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactName, setContactName] = useState("");
 
-  // PASSENGER STATE
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
+  // PASSENGERS STATE
+  const [passengers, setPassengersState] = useState([]);
 
-  // VALIDATIONS
-  const phoneError = phone.length !== 10 || isNaN(phone);
-  const stateError = state === "";
-  const nameError = name.trim() === "";
-  const ageError = Number(age) <= 0;
-  const genderError = gender === "";
+  // LOAD PROFILE
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const profile = await getProfile();
+        console.log("Profile data received:", profile);
+        
+        if (profile) {
+          // Handle the correct API response structure: data.user
+          const profileInfo = profile?.data?.user || profile?.user || profile?.data || profile;
+          setProfileData(profileInfo);
+          setContactName(profileInfo?.name || "");
+          setContactPhone(profileInfo?.mobile || "");
+          setContactEmail(profileInfo?.email || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // INITIALIZE PASSENGERS
+  useEffect(() => {
+    if (selectedSeats && selectedSeats.length > 0) {
+      const initialPassengers = selectedSeats.map((seat, index) => ({
+        seatIndex: index,
+        seatName: seat.name || "",
+        seatFare: seat.fare || 0,
+        name: (index === 0 && profileData?.name) ? profileData.name : "",
+        age: "",
+        gender: "",
+        idType: "",
+        idNumber: "",
+        mobile: contactPhone || "",
+        email: contactEmail || "",
+        primary: index === 0 ? "true" : "false",
+      }));
+
+      setPassengersState(initialPassengers);
+    }
+  }, [selectedSeats, profileData]);
+
+  // VALIDATION
+  const validateContact = () => {
+    return (
+      contactName?.trim() !== "" &&
+      contactPhone?.length === 10 &&
+      !isNaN(contactPhone) &&
+      contactEmail?.includes("@")
+    );
+  };
+
+  const validatePassenger = (passenger) => {
+    return (
+      passenger?.name?.trim?.() !== "" &&
+      Number(passenger?.age) > 0 &&
+      Number(passenger?.age) <= 120 &&
+      passenger?.gender !== ""
+    );
+  };
 
   const isFormValid =
-    !phoneError &&
-    !stateError &&
-    !nameError &&
-    !ageError &&
-    !genderError;
+    validateContact() &&
+    passengers.length > 0 &&
+    passengers.every((p) => validatePassenger(p));
 
-  useEffect(() => {
-  if (onValidationChange) {
-    onValidationChange(isFormValid);
-  }
+  // UPDATE PASSENGER
+  const updatePassenger = (index, field, value) => {
+    const updated = [...passengers];
+    updated[index] = { ...updated[index], [field]: value };
+    setPassengersState(updated);
+  };
 
-  // ✅ SEND DATA BACK TO MODAL
-  if (isFormValid && setPassengers) {
-    setPassengers([
-      {
-        name,
-        age,
-        gender,
+  // BUILD INVENTORY ITEMS
+  const buildInventoryItems = () => {
+    return passengers.map((p) => ({
+      seatName: p.seatName || "",
+      fare: Number(p.seatFare) || 0,
+      passenger: {
+        name: p.name || "",
+        age: Number(p.age) || 0,
+        gender: p.gender === "male" ? "M" : p.gender === "female" ? "F" : "O",
+        mobile: contactPhone || "",
+        email: contactEmail || "",
+        primary: p.primary,
+        idType: p.idType || "",
+        idNumber: p.idNumber || "",
       },
-    ]);
-  }
-}, [isFormValid, name, age, gender, onValidationChange, setPassengers]);
+    }));
+  };
+
+  // SEND DATA TO MODAL
+  useEffect(() => {
+    if (onValidationChange) {
+      onValidationChange(isFormValid);
+    }
+
+    if (isFormValid && setPassengers) {
+      setPassengers(buildInventoryItems());
+    }
+  }, [isFormValid, passengers, contactPhone, contactEmail, onValidationChange, setPassengers]);
+
+  const contactPhoneError = (contactPhone?.length || 0) !== 10 || isNaN(contactPhone);
+  const contactEmailError = !(contactEmail?.includes("@"));
+  const contactNameError = !contactName?.trim();
 
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-
-        {/* ================= CONTACT DETAILS ================= */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-2xl font-bold mb-1">
-            Contact details
-          </h2>
-          <p className="text-gray-500 mb-4">
-            Ticket details will be sent to
-          </p>
-
-          {/* PHONE */}
-          <div className="mb-2">
-            <div
-              className={`flex border-2 rounded-xl overflow-hidden ${phoneError ? "border-red-500" : "border-gray-300"
-                }`}
-            >
-              <div className="px-4 py-3 bg-gray-50 border-r">
-                <p className="text-xs text-gray-500">Country Code</p>
-                <p className="font-semibold">+91 (IND)</p>
-              </div>
-
-              <input
-                type="text"
-                placeholder="Phone *"
-                className="flex-1 px-4 outline-none"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+    <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_320px] gap-3 sm:gap-4 md:gap-4">
+      {/* LEFT SIDE - DETAILS */}
+      <div className="space-y-3 sm:space-y-4">
+        
+        {/* CONTACT DETAILS CARD */}
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 md:p-6 ">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Phone size={20} className="text-red-500" />
+              <h2 className="text-lg sm:text-xl font-bold">Contact Details</h2>
             </div>
-
-            {phoneError && (
-              <p className="text-red-500 text-sm mt-1">
-                Please enter valid phone number
-              </p>
+            {profileData && (
+              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                From Profile
+              </span>
             )}
           </div>
-
-          {/* EMAIL */}
-          <input
-            type="email"
-            placeholder="Email ID"
-            className="w-full border rounded-xl px-4 py-3 mb-4"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          {/* STATE */}
-          <select
-            className={`w-full border-2 rounded-xl px-4 py-3 ${stateError ? "border-red-500" : "border-gray-300"
-              }`}
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-          >
-            <option value="">State of Residence *</option>
-            <option>Uttar Pradesh</option>
-            <option>Maharashtra</option>
-            <option>Delhi</option>
-          </select>
-
-          <p className="text-red-500 text-sm mt-2 mb-4">
-            Required for GST Tax Invoicing
+          <p className="text-xs sm:text-sm text-gray-600 mb-4">
+            {profileData ? "Pre-filled from your profile. You can edit these details." : "Enter your contact details"}
           </p>
-
-          {/* WHATSAPP */}
-          <div className="flex items-center justify-between">
-            <p>Send booking details on WhatsApp</p>
-
-            <div
-              onClick={() => setWhatsapp(!whatsapp)}
-              className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer ${whatsapp ? "bg-red-500" : "bg-gray-300"
-                }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full transform duration-300 ${whatsapp ? "translate-x-6" : ""
-                  }`}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ================= PASSENGER DETAILS ================= */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-2xl font-bold mb-4">
-            Passenger details
-          </h2>
-
-          {/* LOGIN BAR */}
-          <div className="bg-red-100 text-center py-3 rounded-full mb-5">
-            Login to view saved passengers list
-          </div>
-
-          {/* HEADER */}
-          <div className="flex items-center gap-3 mb-4 border-b pb-3">
-            <div className="bg-gray-200 p-3 rounded-full">👤</div>
-            <div>
-              <p className="font-semibold">Passenger 1</p>
-              <p className="text-gray-500 text-sm">
-                Seat U3, Upper Deck
-              </p>
-            </div>
-          </div>
 
           {/* NAME */}
           <div className="mb-3">
+            <label className="block text-sm font-semibold mb-1">Full Name *</label>
             <input
               type="text"
-              placeholder="Name *"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={`w-full px-4 py-3 rounded-xl border-2 ${nameError ? "border-red-500" : "border-gray-300"
-                }`}
+              placeholder="Enter your name"
+              value={contactName || ""}
+              onChange={(e) => setContactName(e.target.value)}
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 text-sm sm:text-base ${
+                contactNameError ? "border-red-500 bg-red-50" : "border-gray-300"
+              }`}
             />
-            {nameError && (
-              <p className="text-red-500 text-sm mt-1">
-                Please enter valid Name
-              </p>
-            )}
+            {contactNameError && <p className="text-red-500 text-xs mt-1">Name is required</p>}
           </div>
 
-          {/* AGE */}
-          <div className="mb-4">
+          {/* PHONE */}
+          <div className="mb-3">
+            <label className="block text-sm font-semibold mb-1">Mobile Number *</label>
+            <div className={`flex border-2 rounded-lg overflow-hidden ${contactPhoneError ? "border-red-500 bg-red-50" : "border-gray-300"}`}>
+              <div className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 border-r text-xs sm:text-sm font-semibold whitespace-nowrap">
+                +91
+              </div>
+              <input
+                type="text"
+                placeholder="10-digit number"
+                maxLength="10"
+                value={contactPhone || ""}
+                onChange={(e) => setContactPhone(e.target.value.replace(/\D/g, ""))}
+                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 outline-none text-sm sm:text-base"
+              />
+            </div>
+            {contactPhoneError && <p className="text-red-500 text-xs mt-1">Enter valid 10-digit number</p>}
+          </div>
+
+          {/* EMAIL */}
+          <div className="mb-3">
+            <label className="block text-sm font-semibold mb-1">Email Address *</label>
             <input
-              type="number"
-              placeholder="Age *"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              className={`w-full px-4 py-3 rounded-xl border-2 ${ageError ? "border-red-500" : "border-gray-300"
-                }`}
+              type="email"
+              placeholder="your@email.com"
+              value={contactEmail || ""}
+              onChange={(e) => setContactEmail(e.target.value)}
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 text-sm sm:text-base ${
+                contactEmailError ? "border-red-500 bg-red-50" : "border-gray-300"
+              }`}
             />
-            {ageError && (
-              <p className="text-red-500 text-sm mt-1">
-                Please enter valid Age
-              </p>
-            )}
+            {contactEmailError && <p className="text-red-500 text-xs mt-1">Enter valid email</p>}
           </div>
-
-          {/* GENDER */}
-          <p className="mb-2">
-            Gender <span className="text-red-500">*</span>
-          </p>
-
-          <div className="flex gap-4">
-            <div
-              onClick={() => setGender("male")}
-              className={`flex-1 border-2 rounded-full px-5 py-3 flex justify-between cursor-pointer ${gender === "male"
-                  ? "border-red-500"
-                  : "border-gray-300"
-                }`}
-            >
-              Male
-            </div>
-
-            <div
-              onClick={() => setGender("female")}
-              className={`flex-1 border-2 rounded-full px-5 py-3 flex justify-between cursor-pointer ${gender === "female"
-                  ? "border-red-500"
-                  : "border-gray-300"
-                }`}
-            >
-              Female
-            </div>
-          </div>
-
-          {genderError && (
-            <p className="text-red-500 text-sm mt-2">
-              Please select valid gender
-            </p>
-          )}
         </div>
 
+        {/* PASSENGER DETAILS CARDS */}
+        <div className="space-y-3 sm:space-y-4">
+          {passengers.map((passenger, index) => (
+            <div key={index} className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 md:p-6">
+              {/* HEADER */}
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base">
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm sm:text-base">Passenger {index + 1}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Seat {passenger?.seatName || "N/A"}</p>
+                </div>
+              </div>
 
+              {/* PASSENGER FORM */}
+              <div className="space-y-3">
+                {/* NAME */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Passenger name"
+                    value={passenger?.name || ""}
+                    onChange={(e) => updatePassenger(index, "name", e.target.value)}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 text-sm sm:text-base ${
+                      (passenger?.name || "").trim() === "" ? "border-red-300" : "border-gray-300"
+                    }`}
+                  />
+                </div>
+
+                {/* AGE */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Age *</label>
+                  <input
+                    type="number"
+                    placeholder="Age"
+                    min="1"
+                    max="120"
+                    value={passenger?.age || ""}
+                    onChange={(e) => updatePassenger(index, "age", e.target.value)}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 text-sm sm:text-base ${
+                      (passenger?.age === "" || Number(passenger?.age) <= 0) ? "border-red-300" : "border-gray-300"
+                    }`}
+                  />
+                </div>
+
+                {/* GENDER */}
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Gender *</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["male", "female", "other"].map((genderOption) => (
+                      <button
+                        key={genderOption}
+                        onClick={() => updatePassenger(index, "gender", genderOption)}
+                        className={`py-2 px-3 rounded-lg border-2 font-semibold text-xs sm:text-sm transition ${
+                          passenger?.gender === genderOption
+                            ? "border-red-500 bg-red-50 text-red-700"
+                            : "border-gray-300 text-gray-700 hover:border-gray-400"
+                        }`}
+                      >
+                        {genderOption.charAt(0).toUpperCase() + genderOption.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ID TYPE */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">ID Type (Optional)</label>
+                  <select
+                    value={passenger?.idType || ""}
+                    onChange={(e) => updatePassenger(index, "idType", e.target.value)}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 text-sm sm:text-base"
+                  >
+                    <option value="">Select ID Type</option>
+                    <option value="aadhaar">Aadhar</option>
+                    <option value="passport">Passport</option>
+                    <option value="license">Driving License</option>
+                    <option value="pan">PAN</option>
+                  </select>
+                </div>
+
+                {/* ID NUMBER */}
+                {passenger?.idType && (
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">ID Number</label>
+                    <input
+                      type="text"
+                      placeholder="Enter ID number"
+                      value={passenger?.idNumber || ""}
+                      onChange={(e) => updatePassenger(index, "idNumber", e.target.value)}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 text-sm sm:text-base"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      
     </div>
   );
 }
 
-export default BookingPage;
+export default Passenger;
